@@ -3,51 +3,350 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spookyfy</title>
+  <title>Spookyfy - Haunting Sounds</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --primary-bg: #121212;
+  --secondary-bg: #1E1E2F;
+  --accent-color: #FF79C6;
+  --secondary-accent: #8BE9FD;
+  --text-primary: #E0E0E0;
+  --text-muted: #6272A4;
+  --highlight-color: #50FA7B;
+  --loading-color: #FFB86C;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-color) var(--secondary-bg);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--secondary-bg);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color);
+  border-radius: 20px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+    url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 11 C36 36, 64 64, 89 89" stroke="%23FF79C6" fill="none" stroke-width="2"/%3E%3Cpath d="M89 11 C64 36, 36 64, 11 89" stroke="%238BE9FD" fill="none" stroke-width="2"/%3E%3C/svg%3E');
+  background-size: cover, 100px 100px;
+}
+
+header {
+  text-align: center;
+  padding: 30px 0;
+  background: var(--secondary-bg);
+  border-bottom: 3px solid var(--accent-color);
+  box-shadow: var(--box-shadow);
+}
+
+header h1 {
+  font-family: 'Creepster', cursive;
+  font-size: 3rem;
+  color: var(--accent-color);
+  text-shadow: 2px 2px 4px rgba(255,121,198,0.5);
+  letter-spacing: 2px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 20px;
+  background: rgba(40, 42, 54, 0.8);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.search-container {
+  display: flex;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+#searchInput {
+  flex-grow: 1;
+  padding: 15px;
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+  border: 2px solid var(--text-muted);
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px rgba(255,121,198,0.3);
+}
+
+#searchBtn {
+  padding: 15px 25px;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  border: none;
+  background: var(--accent-color);
+  color: var(--primary-bg);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#searchBtn:hover {
+  background: #ff4da6;
+  transform: translateY(-2px);
+}
+
+#searchBtn:active {
+  transform: translateY(0);
+}
+
+.results,
+.saved-tracks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.result-item,
+.saved-track-item {
+  background: var(--secondary-bg);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.result-item:hover,
+.saved-track-item:hover {
+  transform: scale(1.05);
+  border-color: var(--accent-color);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.result-item img,
+.saved-track-item img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.result-item:hover img,
+.saved-track-item:hover img {
+  transform: scale(1.1);
+}
+
+.result-item .track-info,
+.saved-track-item .track-info {
+  padding: 15px;
+  background: rgba(0,0,0,0.6);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  color: var(--text-primary);
+}
+
+/* Audio Player */
+.audio-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--secondary-bg);
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.player-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+}
+
+.player-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.player-info {
+  flex-grow: 1;
+}
+
+.player-info h3 {
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.seekbar-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#audioSeekbar {
+  flex-grow: 1;
+  appearance: none;
+  height: 6px;
+  background: var(--text-muted);
+  border-radius: 3px;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+#audioSeekbar:hover {
+  opacity: 1;
+}
+
+#audioSeekbar::-webkit-slider-thumb {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.player-controls-buttons {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.player-controls-buttons button {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.player-controls-buttons button:hover {
+  color: var(--accent-color);
+}
+
+.time-display {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+#errorMessage {
+  color: #FF4136;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255,65,54,0.1);
+  border-radius: var(--border-radius);
+  display: none;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .audio-player {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .player-wrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .player-controls-buttons {
+    margin-top: 10px;
+  }
+}
+  </style>
 </head>
 <body>
-  <div class="background-overlay"></div>
   <header class="app-header">
     <h1>Spookyfy</h1>
   </header>
+  
   <div class="container">
     <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Search YouTube Audio..." />
+      <input type="text" id="searchInput" placeholder="Search Haunting Audio..." />
       <button id="searchBtn">
+        <i class="fas fa-search"></i>
         <span id="searchBtnText">Search</span>
       </button>
     </div>
+    
     <div id="errorMessage"></div>
-    <h2>Your Saved Tracks</h2>
-    <div class="saved-tracks" id="savedTracks"></div>
-    <h2>Search Results</h2>
-    <div class="results" id="results"></div>
+    
+    <section>
+      <h2>Your Saved Tracks</h2>
+      <div class="saved-tracks" id="savedTracks">
+        <!-- Saved tracks will be dynamically populated -->
+      </div>
+    </section>
+    
+    <section>
+      <h2>Search Results</h2>
+      <div class="results" id="results">
+        <!-- Search results will be dynamically populated -->
+      </div>
+    </section>
   </div>
 
   <div class="audio-player" id="audioPlayer">
     <div class="player-wrapper">
       <img id="thumbnail" class="player-thumbnail" src="" alt="Track Thumbnail">
+      
       <div class="player-info">
-        <h3 id="title">Track Title</h3>
+        <h3 id="title">No Track Playing</h3>
         <div class="seekbar-container">
           <span id="currentTime" class="time-display">0:00</span>
           <input type="range" id="audioSeekbar" min="0" max="100" value="0">
           <span id="duration" class="time-display">0:00</span>
         </div>
       </div>
+      
       <div class="player-controls-buttons">
-        <button id="prevBtn"><i class="fas fa-step-backward"></i></button>
-        <button id="playPauseBtn"><i class="fas fa-play"></i></button>
-        <button id="nextBtn"><i class="fas fa-step-forward"></i></button>
-        <button id="repeatBtn"><i class="fas fa-redo"></i></button>
-        <button id="shuffleBtn"><i class="fas fa-random"></i></button>
-        <button id="downloadBtn"><i class="fas fa-download"></i></button>
+        <button id="prevBtn" title="Previous Track"><i class="fas fa-step-backward"></i></button>
+        <button id="playPauseBtn" title="Play/Pause"><i class="fas fa-play"></i></button>
+        <button id="nextBtn" title="Next Track"><i class="fas fa-step-forward"></i></button>
+        <button id="repeatBtn" title="Repeat"><i class="fas fa-redo"></i></button>
+        <button id="shuffleBtn" title="Shuffle"><i class="fas fa-random"></i></button>
+        <button id="downloadBtn" title="Download"><i class="fas fa-download"></i></button>
       </div>
     </div>
   </div>
-
   <script src="script.js"></script>
+
 </body>
 </html>

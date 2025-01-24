@@ -352,22 +352,37 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="search-container">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search for songs...">
-            <button id="searchButton" style="padding: 10px 15px; margin-left: 10px; cursor: pointer; border: none; border-radius: 20px; background: var(--primary-color); color: white; font-size: 14px;">Search</button>
-            <button id="hideResultsButton" style="padding: 10px 15px; margin-left: 10px; cursor: pointer; border: none; border-radius: 20px; background: var(--secondary-text); color: white; font-size: 14px; display: none;">Hide Results</button>
-        </div>
-    </div>
+<div class="header">
+    <div class="search-container">
 
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search for songs..." 
+            style="padding: 10px; border: 1px solid #ccc; border-radius: 20px; font-size: 14px; width: 200px;"
+        >
+        <button 
+            id="searchButton" 
+            style="padding: 10px 15px; margin-left: 10px; cursor: pointer; border: none; border-radius: 20px; background: var(--primary-color); color: white; font-size: 14px;"
+        >
+            Search
+        </button>
+        <button 
+            id="hideResultsButton" 
+            style="padding: 10px 15px 10px 10px; margin-left: 10px; cursor: pointer; border: none; border-radius: 20px; background: var(--secondary-text); color: white; font-size: 14px; display: none;"
+        >
+            Hide
+        </button>
+    </div>
+</div>
+
+
+
+    <div id="songList" class="song-list"></div>
     <div id="recentlyPlayedContainer" class="song-list">
         <h3 style="margin-bottom: 10px;">Recently Played:</h3>
         <div id="recentlyPlayed"></div>
     </div>
-
-    <div id="songList" class="song-list"></div>
-
     <div id="playerContainer" class="player-container" style="display: none;">
         <div class="now-playing">
             <img id="currentSongImage" src="" alt="Album Art">
@@ -381,123 +396,169 @@
         </div>
     </div>
 
-    <script>
-        const youtubeApiKey = "AIzaSyD3BDxg0AQ7Sv8oU_8my2PObT-S7FWYcTc";
-        const searchUrl = query => `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=6&q=${encodeURIComponent(query)}&key=${youtubeApiKey}`;
-        const rapidApiUrl = id => `https://youtube-mp36.p.rapidapi.com/dl?id=${id}`;
-        const rapidApiHeaders = {
-            'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
-            'x-rapidapi-key': 'f707dd8d67mshaf3d42fbdfe97c8p1d93d4jsnd8b8ceb0121e'
-        };
+<script>
+    const youtubeApiKey = "AIzaSyD3BDxg0AQ7Sv8oU_8my2PObT-S7FWYcTc";
+    const searchUrl = query => `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=6&q=${encodeURIComponent(query)}&key=${youtubeApiKey}`;
+    const rapidApiUrl = id => `https://youtube-mp36.p.rapidapi.com/dl?id=${id}`;
+    const rapidApiHeaders = {
+        'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
+        'x-rapidapi-key': 'f707dd8d67mshaf3d42fbdfe97c8p1d93d4jsnd8b8ceb0121e'
+    };
 
-        const searchInput = document.getElementById("searchInput");
-        const searchButton = document.getElementById("searchButton");
-        const hideResultsButton = document.getElementById("hideResultsButton");
-        const songList = document.getElementById("songList");
-        const playerContainer = document.getElementById("playerContainer");
-        const currentSongImage = document.getElementById("currentSongImage");
-        const currentSongName = document.getElementById("currentSongName");
-        const currentSongArtist = document.getElementById("currentSongArtist");
-        const audioPlayer = document.getElementById("audioPlayer");
-        const recentlyPlayedContainer = document.getElementById("recentlyPlayed");
-        const recentlyPlayedKey = "recentlyPlayedSongs";
+    const cache = {}; // Simple cache for MP3 links
+    const recentlyPlayedKey = "recentlyPlayedSongs";
 
-        // Load recently played songs from localStorage
-        window.onload = () => {
-            const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
-            recentSongs.forEach(song => {
-                addSongToRecentlyPlayed(song.title, song.channel, song.thumbnail);
-            });
-        };
+    const searchInput = document.getElementById("searchInput");
+    const searchButton = document.getElementById("searchButton");
+    const hideResultsButton = document.getElementById("hideResultsButton");
+    const songList = document.getElementById("songList");
+    const playerContainer = document.getElementById("playerContainer");
+    const currentSongImage = document.getElementById("currentSongImage");
+    const currentSongName = document.getElementById("currentSongName");
+    const currentSongArtist = document.getElementById("currentSongArtist");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const recentlyPlayedContainer = document.getElementById("recentlyPlayed");
 
-        // Handle search
-        searchButton.addEventListener("click", async () => {
-            const query = searchInput.value;
-            if (query.length < 3) return alert("Enter at least 3 characters.");
-            
-            songList.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Loading...</div>`;
-            hideResultsButton.style.display = "inline-block";
+    // Load recently played songs from localStorage
+    window.onload = () => {
+        const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
+        recentSongs.forEach(song => addSongToRecentlyPlayedUI(song));
+    };
 
-            try {
-                const response = await fetch(searchUrl(query));
-                const data = await response.json();
-                songList.innerHTML = "";
+    // Handle search
+    searchButton.addEventListener("click", async () => {
+        const query = searchInput.value;
+        if (query.length < 3) return alert("Enter at least 3 characters.");
+        
+        songList.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Loading...</div>`;
+        hideResultsButton.style.display = "inline-block";
 
-                data.items.forEach((item) => {
-                    const videoId = item.id.videoId;
-                    const title = item.snippet.title;
-                    const channel = item.snippet.channelTitle;
-                    const thumbnail = item.snippet.thumbnails.default.url;
-
-                    const songItem = document.createElement("div");
-                    songItem.classList.add("song-item");
-                    songItem.innerHTML = `
-                        <img src="${thumbnail}" alt="${title}">
-                        <div class="song-details">
-                            <div class="song-name">${title}</div>
-                            <div class="song-artist">${channel}</div>
-                        </div>
-                    `;
-                    songItem.addEventListener("click", () => playSong(videoId, title, channel, thumbnail));
-                    songList.appendChild(songItem);
-                });
-            } catch (error) {
-                console.error("Error fetching search results:", error);
-                songList.innerHTML = `<div class="loading">Error loading songs.</div>`;
-            }
-        });
-
-        hideResultsButton.addEventListener("click", () => {
+        try {
+            const response = await fetch(searchUrl(query));
+            const data = await response.json();
             songList.innerHTML = "";
-            hideResultsButton.style.display = "none";
-        });
 
-        async function playSong(videoId, title, channel, thumbnail) {
-            try {
-                playerContainer.style.display = "flex";
-                currentSongImage.src = thumbnail;
-                currentSongName.textContent = title;
-                currentSongArtist.textContent = channel;
+            data.items.forEach((item) => {
+                const videoId = item.id.videoId;
+                const title = item.snippet.title;
+                const channel = item.snippet.channelTitle;
+                const thumbnail = item.snippet.thumbnails.default.url;
 
-                // Add to recently played
-                addSongToRecentlyPlayed(title, channel, thumbnail);
+                const songItem = document.createElement("div");
+                songItem.classList.add("song-item");
+                songItem.innerHTML = `
+                    <img src="${thumbnail}" alt="${title}">
+                    <div class="song-details">
+                        <div class="song-name">${title}</div>
+                        <div class="song-artist">${channel}</div>
+                    </div>
+                `;
+                songItem.addEventListener("click", () => playSong(videoId, title, channel, thumbnail));
+                songList.appendChild(songItem);
+            });
+        } catch (error) {
+            console.error("Error fetching search results:", error);
+            songList.innerHTML = `<div class="loading">Error loading songs.</div>`;
+        }
+    });
 
+    hideResultsButton.addEventListener("click", () => {
+        songList.innerHTML = "";
+        hideResultsButton.style.display = "none";
+    });
+
+    async function playSong(videoId, title, channel, thumbnail) {
+        try {
+            playerContainer.style.display = "flex";
+            currentSongImage.src = thumbnail;
+            currentSongName.textContent = title;
+            currentSongArtist.textContent = channel;
+
+            // Add to recently played
+            addSongToRecentlyPlayed(videoId, title, channel, thumbnail);
+
+            if (cache[videoId]) {
+                // Use cached MP3 link
+                audioPlayer.src = cache[videoId];
+                audioPlayer.play();
+            } else {
+                // Show loading state
+                currentSongArtist.textContent = "Preparing...";
+                
                 const response = await fetch(rapidApiUrl(videoId), {
                     method: "GET",
                     headers: rapidApiHeaders
                 });
                 const data = await response.json();
                 if (data && data.link) {
+                    cache[videoId] = data.link; // Save to cache
                     audioPlayer.src = data.link;
                     audioPlayer.play();
                 } else {
                     alert("Error fetching MP3 link.");
                 }
-            } catch (error) {
-                console.error("Error fetching MP3 link:", error);
-                alert("Error playing song.");
             }
+        } catch (error) {
+            console.error("Error fetching MP3 link:", error);
+            alert("Error playing song.");
         }
+    }
 
-        function addSongToRecentlyPlayed(title, channel, thumbnail) {
-            // Add to UI
-            const songItem = document.createElement("div");
-            songItem.classList.add("song-item");
-            songItem.innerHTML = `
-                <img src="${thumbnail}" alt="${title}">
-                <div class="song-details">
-                    <div class="song-name">${title}</div>
-                    <div class="song-artist">${channel}</div>
-                </div>
-            `;
-            recentlyPlayedContainer.prepend(songItem);
-
-            // Save to localStorage
-            const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
-            recentSongs.unshift({ title, channel, thumbnail });
-            if (recentSongs.length > 10) recentSongs.pop(); // Limit to 10 recent songs
+    function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
+        const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
+        
+        // Check if the song already exists
+        if (!recentSongs.some(song => song.videoId === videoId)) {
+            const newSong = { videoId, title, channel, thumbnail };
+            recentSongs.unshift(newSong);
+            if (recentSongs.length > 10) recentSongs.pop(); // Limit to 10 songs
             localStorage.setItem(recentlyPlayedKey, JSON.stringify(recentSongs));
+            addSongToRecentlyPlayedUI(newSong);
         }
-    </script>
+    }
+
+    function addSongToRecentlyPlayedUI(song) {
+        const { videoId, title, channel, thumbnail } = song;
+        const songItem = document.createElement("div");
+        songItem.classList.add("song-item");
+        songItem.innerHTML = `
+            <img src="${thumbnail}" alt="${title}">
+            <div class="song-details">
+                <div class="song-name">${title}</div>
+                <div class="song-artist">${channel}</div>
+            </div>
+        `;
+        songItem.addEventListener("click", () => playSong(videoId, title, channel, thumbnail));
+        recentlyPlayedContainer.prepend(songItem);
+    }
+    // Queue for recently played songs
+let songQueue = [];
+
+// Play the next song in the queue
+audioPlayer.addEventListener("ended", () => {
+    if (songQueue.length > 0) {
+        const nextSong = songQueue.shift(); // Remove the first song from the queue
+        playSong(nextSong.videoId, nextSong.title, nextSong.channel, nextSong.thumbnail);
+    }
+});
+
+function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
+    const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
+
+    // Check if the song already exists
+    if (!recentSongs.some(song => song.videoId === videoId)) {
+        const newSong = { videoId, title, channel, thumbnail };
+        recentSongs.unshift(newSong);
+        if (recentSongs.length > 10) recentSongs.pop(); // Limit to 10 songs
+        localStorage.setItem(recentlyPlayedKey, JSON.stringify(recentSongs));
+        addSongToRecentlyPlayedUI(newSong);
+    }
+
+    // Add the new song to the queue (ensure no duplicates)
+    if (!songQueue.some(song => song.videoId === videoId)) {
+        songQueue.push({ videoId, title, channel, thumbnail });
+    }
+}
+</script>
 </body>
 </html>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player</title>
+    <!-- Font Awesome CDN -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -350,13 +351,19 @@
         }
     </style>
 </head>
-
 <body>
     <div class="header">
         <div class="search-container">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search for songs..." />
+            <input type="text" id="searchInput" placeholder="Search for songs...">
+            <button id="searchButton" style="padding: 10px 15px; margin-left: 10px; cursor: pointer; border: none; border-radius: 20px; background: var(--primary-color); color: white; font-size: 14px;">Search</button>
+            <button id="hideResultsButton" style="padding: 10px 15px; margin-left: 10px; cursor: pointer; border: none; border-radius: 20px; background: var(--secondary-text); color: white; font-size: 14px; display: none;">Hide Results</button>
         </div>
+    </div>
+
+    <div id="recentlyPlayedContainer" class="song-list">
+        <h3 style="margin-bottom: 10px;">Recently Played:</h3>
+        <div id="recentlyPlayed"></div>
     </div>
 
     <div id="songList" class="song-list"></div>
@@ -375,8 +382,8 @@
     </div>
 
     <script>
-        const youtubeApiKey = "AIzaSyA6UP-7PEXXrQaWf84WuG_RxHS5jBcQEqc";
-        const searchUrl = query => `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=${encodeURIComponent(query)}&key=${youtubeApiKey}`;
+        const youtubeApiKey = "AIzaSyD3BDxg0AQ7Sv8oU_8my2PObT-S7FWYcTc";
+        const searchUrl = query => `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=6&q=${encodeURIComponent(query)}&key=${youtubeApiKey}`;
         const rapidApiUrl = id => `https://youtube-mp36.p.rapidapi.com/dl?id=${id}`;
         const rapidApiHeaders = {
             'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
@@ -384,18 +391,33 @@
         };
 
         const searchInput = document.getElementById("searchInput");
+        const searchButton = document.getElementById("searchButton");
+        const hideResultsButton = document.getElementById("hideResultsButton");
         const songList = document.getElementById("songList");
         const playerContainer = document.getElementById("playerContainer");
         const currentSongImage = document.getElementById("currentSongImage");
         const currentSongName = document.getElementById("currentSongName");
         const currentSongArtist = document.getElementById("currentSongArtist");
         const audioPlayer = document.getElementById("audioPlayer");
+        const recentlyPlayedContainer = document.getElementById("recentlyPlayed");
+        const recentlyPlayedKey = "recentlyPlayedSongs";
 
-        searchInput.addEventListener("input", async (e) => {
-            const query = e.target.value;
-            if (query.length < 3) return; // Wait for 3 characters
-            songList.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Loading...</div>`;
+        // Load recently played songs from localStorage
+        window.onload = () => {
+            const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
+            recentSongs.forEach(song => {
+                addSongToRecentlyPlayed(song.title, song.channel, song.thumbnail);
+            });
+        };
+
+        // Handle search
+        searchButton.addEventListener("click", async () => {
+            const query = searchInput.value;
+            if (query.length < 3) return alert("Enter at least 3 characters.");
             
+            songList.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Loading...</div>`;
+            hideResultsButton.style.display = "inline-block";
+
             try {
                 const response = await fetch(searchUrl(query));
                 const data = await response.json();
@@ -425,12 +447,20 @@
             }
         });
 
+        hideResultsButton.addEventListener("click", () => {
+            songList.innerHTML = "";
+            hideResultsButton.style.display = "none";
+        });
+
         async function playSong(videoId, title, channel, thumbnail) {
             try {
                 playerContainer.style.display = "flex";
                 currentSongImage.src = thumbnail;
                 currentSongName.textContent = title;
                 currentSongArtist.textContent = channel;
+
+                // Add to recently played
+                addSongToRecentlyPlayed(title, channel, thumbnail);
 
                 const response = await fetch(rapidApiUrl(videoId), {
                     method: "GET",
@@ -447,6 +477,26 @@
                 console.error("Error fetching MP3 link:", error);
                 alert("Error playing song.");
             }
+        }
+
+        function addSongToRecentlyPlayed(title, channel, thumbnail) {
+            // Add to UI
+            const songItem = document.createElement("div");
+            songItem.classList.add("song-item");
+            songItem.innerHTML = `
+                <img src="${thumbnail}" alt="${title}">
+                <div class="song-details">
+                    <div class="song-name">${title}</div>
+                    <div class="song-artist">${channel}</div>
+                </div>
+            `;
+            recentlyPlayedContainer.prepend(songItem);
+
+            // Save to localStorage
+            const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
+            recentSongs.unshift({ title, channel, thumbnail });
+            if (recentSongs.length > 10) recentSongs.pop(); // Limit to 10 recent songs
+            localStorage.setItem(recentlyPlayedKey, JSON.stringify(recentSongs));
         }
     </script>
 </body>

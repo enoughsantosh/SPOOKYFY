@@ -1,0 +1,88 @@
+:root {
+  --primary-bg: #1E1E2F;
+  --secondary-bg: #282A36;
+  --accent-color: #FF79C6;
+  --secondary-accent: #8BE9FD;
+  --text-primary: #F8F8F2;
+  --text-muted: #6272A4;
+  --highlight-color: #50FA7B;
+  --loading-color: #FFB86C;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+header {
+  text-align: center;
+  padding: 20px 0;
+  background: var(--secondary-bg);
+  border-bottom: 2px solid var(--accent-color);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+.search-container {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+#searchInput {
+  flex-grow: 1;
+  padding: 15px;
+  border-radius: 8px 0 0 8px;
+  border: none;
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+}
+
+#searchBtn {
+  padding: 15px;
+  border-radius: 0 8px 8px 0;
+  border: none;
+  background: var(--accent-color);
+  color: var(--primary-bg);
+  cursor: pointer;
+}
+
+.results,
+.saved-tracks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.result-item {
+  background: var(--secondary-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.result-item:hover {
+  transform: scale(1.05);
+}
+
+/* Audio Player */
+.audio-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--secondary-bg);
+  display: none;
+}

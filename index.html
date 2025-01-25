@@ -450,7 +450,7 @@ input:checked + .slider:before {
     </div>
 </div>
 <script>
-    const musicUrl = id => `https://cors.karankingrider.workers.dev/?url=https://calm-art-75c5.kalu4134.workers.dev?url=https://invidious.nerdvpn.de/latest_version?id=${id}&itag=140`;
+    const musicUrl = id => `https://cors.karankingrider.workers.dev/?url=https://y2-indol.vercel.app/api/convert`;    
     const searchUrl = query => `https://cors.karankingrider.workers.dev/?url=https://ytsearch-three.vercel.app/search?query=${encodeURIComponent(query)}`;
     const rapidApiUrl = id => `https://youtube-mp36.p.rapidapi.com/dl?id=${id}`;
     const rapidApiHeaders = {
@@ -572,31 +572,44 @@ async function playSong(videoId, title, channel, thumbnail) {
                 audioPlayer.play();
                 currentSongArtist.textContent = channel;
             } else {
-                const response = await fetch(musicUrl(videoId), { 
-                    method: "GET",
+            const response = await fetch(musicUrl(videoId), {
+    method: "POST", // Change the method to POST
+    headers: {
+        "Content-Type": "application/json", // Specify the content type
+    },
+    body: JSON.stringify({ link: "https://www.youtube.com/watch?v="+videoId }) // Send the videoId as the value of 'link'
+});
 
-                });
+// Parse the response
+if (response.ok) {
+    const data = await response.json();
+     // Extract the audio URL from the response
+    const audioUrl = data.url;
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch: ${response.statusText}`);
-                }
+    // Cache the audio URL
+    cache[videoId] = audioUrl;
 
-                const blob = await response.blob();
-                const audioUrl = URL.createObjectURL(blob);
+    // Set the audio player's source to the URL and play the audio
+    audioPlayer.src = audioUrl;
+    audioPlayer.play();
 
-                // Cache the audio URL
-                cache[videoId] = audioUrl;
+    // Update the current song's artist name (assuming channel is defined)
+    currentSongArtist.textContent = channel;
 
-                audioPlayer.src = audioUrl;
-                audioPlayer.play();
-                currentSongArtist.textContent = channel;
+} else {
+    console.error("Error:", response.status, await response.text());
+    alert("Error playing song.");
+}
+
+
+
             }
         }
     } catch (error) {
         console.error("Error:", error);
-        alert("Turn On The Switch And Try Again");
+        alert("Error playing song.");
     }
-}
+                        }
     function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
         const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
         

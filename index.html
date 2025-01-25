@@ -637,6 +637,44 @@ audioPlayer.addEventListener("ended", () => {
     }
 });
 
+    function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
+        const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
+        
+        // Check if the song already exists
+        if (!recentSongs.some(song => song.videoId === videoId)) {
+            const newSong = { videoId, title, channel, thumbnail };
+            recentSongs.unshift(newSong);
+            if (recentSongs.length > 10) recentSongs.pop(); // Limit to 10 songs
+            localStorage.setItem(recentlyPlayedKey, JSON.stringify(recentSongs));
+            addSongToRecentlyPlayedUI(newSong);
+        }
+    }
+
+    function addSongToRecentlyPlayedUI(song) {
+        const { videoId, title, channel, thumbnail } = song;
+        const songItem = document.createElement("div");
+        songItem.classList.add("song-item");
+        songItem.innerHTML = `
+            <img src="${thumbnail}" alt="${title}">
+            <div class="song-details">
+                <div class="song-name">${title}</div>
+                <div class="song-artist">${channel}</div>
+            </div>
+        `;
+        songItem.addEventListener("click", () => playSong(videoId, title, channel, thumbnail));
+        recentlyPlayedContainer.prepend(songItem);
+    }
+    // Queue for recently played songs
+let songQueue = [];
+
+// Play the next song in the queue
+audioPlayer.addEventListener("ended", () => {
+    if (songQueue.length > 0) {
+        const nextSong = songQueue.shift(); // Remove the first song from the queue
+        playSong(nextSong.videoId, nextSong.title, nextSong.channel, nextSong.thumbnail);
+    }
+});
+
 function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
     const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
 
@@ -651,4 +689,9 @@ function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
 
     // Add the new song to the queue (ensure no duplicates)
     if (!songQueue.some(song => song.videoId === videoId)) {
-        songQueue.push({ videoId, titl
+        songQueue.push({ videoId, title, channel, thumbnail });
+    }
+}
+</script>
+</body>
+</html>

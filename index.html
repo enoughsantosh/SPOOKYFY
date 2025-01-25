@@ -561,7 +561,10 @@ async function playSong(videoId, title, channel, thumbnail) {
             }
         } else {
             // Switch is OFF, fetch the song directly
-            const response = await fetch(musicUrl(videoId), { method: "GET" });
+            const response = await fetch(musicUrl(videoId), { 
+                method: "GET",
+                headers: {'Referer': 'https://invidious.nerdvpn.de/watch?v=' + videoId + '&listen=1'}
+            });
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch: ${response.statusText}`);

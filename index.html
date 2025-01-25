@@ -349,6 +349,52 @@
             background-size: 400% 100%;
             animation: shimmer 1.5s infinite;
         }
+        
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
     </style>
 </head>
 <body>
@@ -383,22 +429,29 @@
         <h3 style="margin-bottom: 10px;">Recently Played:</h3>
         <div id="recentlyPlayed"></div>
     </div>
-    <div id="playerContainer" class="player-container" style="display: none;">
-        <div class="now-playing">
-            <img id="currentSongImage" src="" alt="Album Art">
-            <div class="song-details">
-                <div id="currentSongName" class="song-name"></div>
-                <div id="currentSongArtist" class="song-artist"></div>
-            </div>
+<div id="playerContainer" class="player-container" style="display: none;">
+    <div class="now-playing">
+        <img id="currentSongImage" src="" alt="Album Art">
+        <div class="song-details">
+            <div id="currentSongName" class="song-name"></div>
+            <div id="currentSongArtist" class="song-artist"></div>
         </div>
-        <div class="player-controls">
-            <audio id="audioPlayer" class="audio-player" controls></audio>
+                <div class="switch-container" style="margin-left: 10px;">
+            <label class="switch">
+                <input type="checkbox" id="toggleSwitch">
+                <span class="slider round"></span>
+            </label>
+            <span style="margin-left: 20px;" id="switchLabel"></span>
         </div>
     </div>
+    <div class="player-controls">
+        <audio id="audioPlayer" class="audio-player" controls></audio>
 
+    </div>
+</div>
 <script>
-    const youtubeApiKey = "AIzaSyD3BDxg0AQ7Sv8oU_8my2PObT-S7FWYcTc";
-    const searchUrl = query => `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=6&q=${encodeURIComponent(query)}&key=${youtubeApiKey}`;
+    const musicUrl = id => `https://cors.karankingrider.workers.dev/?url=https://invidious.nerdvpn.de/latest_version?id=${id}&itag=140`;
+    const searchUrl = query => `https://cors.karankingrider.workers.dev/?url=https://ytsearch-three.vercel.app/search?query=${encodeURIComponent(query)}`;
     const rapidApiUrl = id => `https://youtube-mp36.p.rapidapi.com/dl?id=${id}`;
     const rapidApiHeaders = {
         'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
@@ -434,15 +487,16 @@
         hideResultsButton.style.display = "inline-block";
 
         try {
-            const response = await fetch(searchUrl(query));
-            const data = await response.json();
-            songList.innerHTML = "";
+    const response = await fetch(searchUrl(query)); // Fetch the data from the FastAPI endpoint
+    const data = await response.json();
+    const results = data.results; // Extract the results array
+    songList.innerHTML = ""; // Clear the current song list
 
-            data.items.forEach((item) => {
-                const videoId = item.id.videoId;
-                const title = item.snippet.title;
-                const channel = item.snippet.channelTitle;
-                const thumbnail = item.snippet.thumbnails.default.url;
+    results.forEach((item) => {
+        const videoId = item.video_id; // Extract video ID
+        const title = item.title; // Extract video title
+        const channel = item.channel; // Extract channel name
+        const thumbnail = item.thumbnail; // Extract thumbnail URL
 
                 const songItem = document.createElement("div");
                 songItem.classList.add("song-item");
@@ -466,17 +520,23 @@
         songList.innerHTML = "";
         hideResultsButton.style.display = "none";
     });
+    
+// Get the toggle switch
+const toggleSwitch = document.getElementById("toggleSwitch");
 
-    async function playSong(videoId, title, channel, thumbnail) {
-        try {
-            playerContainer.style.display = "flex";
-            currentSongImage.src = thumbnail;
-            currentSongName.textContent = title;
-            currentSongArtist.textContent = channel;
+async function playSong(videoId, title, channel, thumbnail) {
+    try {
+        playerContainer.style.display = "flex";
+        currentSongImage.src = thumbnail;
+        currentSongName.textContent = title;
+        currentSongArtist.textContent = channel;
 
-            // Add to recently played
-            addSongToRecentlyPlayed(videoId, title, channel, thumbnail);
+        // Add to recently played
+        addSongToRecentlyPlayed(videoId, title, channel, thumbnail);
 
+        // Check if the toggle switch is on
+        if (toggleSwitch.checked) {
+            // Switch is ON, proceed with making the request
             if (cache[videoId]) {
                 // Use cached MP3 link
                 audioPlayer.src = cache[videoId];
@@ -490,20 +550,35 @@
                     headers: rapidApiHeaders
                 });
                 const data = await response.json();
+                
                 if (data && data.link) {
-                    cache[videoId] = data.link; // Save to cache
                     audioPlayer.src = data.link;
                     audioPlayer.play();
+                    currentSongArtist.textContent = channel;
                 } else {
                     alert("Error fetching MP3 link.");
                 }
             }
-        } catch (error) {
-            console.error("Error fetching MP3 link:", error);
-            alert("Error playing song.");
-        }
-    }
+        } else {
+            // Switch is OFF, fetch the song directly
+            const response = await fetch(musicUrl(videoId), { method: "GET" });
 
+            if (!response.ok) {
+                throw new Error(`Failed to fetch: ${response.statusText}`);
+            }
+
+            const blob = await response.blob();
+            const audioUrl = URL.createObjectURL(blob);
+
+            audioPlayer.src = audioUrl;
+            audioPlayer.play();
+            currentSongArtist.textContent = channel;
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Error playing song.");
+    }
+}
     function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
         const recentSongs = JSON.parse(localStorage.getItem(recentlyPlayedKey)) || [];
         

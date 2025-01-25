@@ -560,7 +560,7 @@ async function playSong(videoId, title, channel, thumbnail) {
                     audioPlayer.play();
                     currentSongArtist.textContent = channel;
                 } else {
-                    alert("Error fetching MP3 link.");
+                    alert("Turn The Switch Off Try Again");
                 }
             }
         } else {
@@ -594,7 +594,7 @@ async function playSong(videoId, title, channel, thumbnail) {
         }
     } catch (error) {
         console.error("Error:", error);
-        alert("Error playing song.");
+        alert("Turn On The Switch And Try Again");
     }
 }
     function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {

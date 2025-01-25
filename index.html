@@ -521,6 +521,8 @@ input:checked + .slider:before {
         hideResultsButton.style.display = "none";
     });
     
+
+
 // Get the toggle switch
 const toggleSwitch = document.getElementById("toggleSwitch");
 
@@ -544,14 +546,16 @@ async function playSong(videoId, title, channel, thumbnail) {
             } else {
                 // Show loading state
                 currentSongArtist.textContent = "Preparing...";
-                
+
                 const response = await fetch(rapidApiUrl(videoId), {
                     method: "GET",
                     headers: rapidApiHeaders
                 });
                 const data = await response.json();
-                
+
                 if (data && data.link) {
+                    // Store the link in cache
+                    cache[videoId] = data.link;
                     audioPlayer.src = data.link;
                     audioPlayer.play();
                     currentSongArtist.textContent = channel;
@@ -561,21 +565,34 @@ async function playSong(videoId, title, channel, thumbnail) {
             }
         } else {
             // Switch is OFF, fetch the song directly
-            const response = await fetch(musicUrl(videoId), { 
-                method: "GET",
-                headers: {'Referer': 'https://invidious.nerdvpn.de/watch?v=' + videoId + '&listen=1'}
-            });
+            if (cache[videoId]) {
+                // Use cached audio blob
+                const audioUrl = cache[videoId];
+                audioPlayer.src = audioUrl;
+                audioPlayer.play();
+                currentSongArtist.textContent = channel;
+            } else {
+                const response = await fetch(musicUrl(videoId), { 
+                    method: "GET",
+                    headers: {
+                        'Referer': 'https://invidious.nerdvpn.de/watch?v=' + videoId + '&listen=1'
+                    }
+                });
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch: ${response.statusText}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch: ${response.statusText}`);
+                }
+
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+
+                // Cache the audio URL
+                cache[videoId] = audioUrl;
+
+                audioPlayer.src = audioUrl;
+                audioPlayer.play();
+                currentSongArtist.textContent = channel;
             }
-
-            const blob = await response.blob();
-            const audioUrl = URL.createObjectURL(blob);
-
-            audioPlayer.src = audioUrl;
-            audioPlayer.play();
-            currentSongArtist.textContent = channel;
         }
     } catch (error) {
         console.error("Error:", error);
@@ -634,9 +651,4 @@ function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
 
     // Add the new song to the queue (ensure no duplicates)
     if (!songQueue.some(song => song.videoId === videoId)) {
-        songQueue.push({ videoId, title, channel, thumbnail });
-    }
-}
-</script>
-</body>
-</html>
+        songQueue.push({ videoId, titl

@@ -394,7 +394,36 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+        .player-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            transition: background 0.3s ease;
+            margin: 0 5px;
+        }
 
+        .player-btn:hover {
+            opacity: 0.9;
+        }
+                .repeat-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            transition: background 0.3s ease;
+            margin: 0 5px;
+        }
+
+        .repeat-btn:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -446,7 +475,21 @@ input:checked + .slider:before {
     </div>
     <div class="player-controls">
         <audio id="audioPlayer" class="audio-player" controls></audio>
-
+            <div class="additional-controls" style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
+        <button id="shuffleButton" class="player-btn">
+            <i class="fas fa-random"></i> Shuffle
+        </button>
+        <button id="repeatButton" class="repeat-btn">
+            <i class="fas fa-redo"></i> Repeat
+        </button>
+        <button id="lyricsButton" class="player-btn">
+            <i class="fas fa-music"></i> Lyrics
+        </button>
+        <button id="downloadButton" class="player-btn">
+            <i class="fas fa-download"></i> 
+        </button>
+            </div>
+        
     </div>
 </div>
 <script>
@@ -664,6 +707,540 @@ function addSongToRecentlyPlayed(videoId, title, channel, thumbnail) {
     if (!songQueue.some(song => song.videoId === videoId)) {
         songQueue.push({ videoId, title, channel, thumbnail });
     }
+}
+    // Function to show download alert
+function showServerAlert() {
+    // Create alert container
+    const alert = document.createElement('div');
+    alert.classList.add('download-alert');
+
+    // Create alert content
+    alert.innerHTML = `
+        <div class="download-alert-icon">
+            <i class="fas fa-download"></i>
+        </div>
+        <div class="download-alert-message">
+            Server Changed
+        </div>
+    `;
+
+    // Append to body
+    document.body.appendChild(alert);
+
+    // Trigger show animation
+    setTimeout(() => {
+        alert.classList.add('show');
+    }, 50);
+
+    // Dismiss alert after 2 seconds
+    setTimeout(() => {
+        alert.classList.remove('show');
+        
+        // Remove from DOM after animation
+        setTimeout(() => {
+            document.body.removeChild(alert);
+        }, 300);
+    }, 2000);
+}
+
+
+//additional buttons
+
+
+// Add event listener for toggle switch
+toggleSwitch.addEventListener('change', function() {
+
+
+
+    // Show alert based on switch state
+    showServerAlert();
+
+    // You can add additional logic here based on switch state
+    console.log(isOn ? 'Toggle is ON' : 'Toggle is OFF');
+});
+
+// Get references to audio player and repeat button
+
+const repeatButton = document.getElementById('repeatButton');
+
+// Track repeat state
+let isRepeatOn = false;
+
+// Event listener for repeat button
+repeatButton.addEventListener('click', function() {
+    // Toggle repeat state
+    isRepeatOn = !isRepeatOn;
+    
+    // Set audio loop based on repeat state
+    audioPlayer.loop = isRepeatOn;
+    
+    // Update button appearance
+    if (isRepeatOn) {
+        // Change icon color to white when repeat is on
+        repeatButton.style.background = 'blue';
+        repeatButton.setAttribute('title', 'Repeat is On');
+    } else {
+        // Reset icon color when repeat is off
+        repeatButton.style.background = '';
+        repeatButton.setAttribute('title', 'Repeat is Off');
+    }
+});
+
+</script>
+
+<style>
+    /* Modal styles */
+    .custom-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .custom-modal.show {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #3494E6, #EC6EAD);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        transform: scale(0.7);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .custom-modal.show .modal-content {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .modal-content h2 {
+        margin-bottom: 15px;
+        font-size: 24px;
+    }
+
+    .modal-content p {
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .modal-close {
+        background-color: white;
+        color: #EC6EAD;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s ease;
+    }
+
+    .modal-close:hover {
+        transform: scale(1.05);
+    }
+</style>
+
+<script>
+    // Get reference to shuffle button
+    const shuffleButton = document.getElementById('shuffleButton');
+
+    // Create modal elements
+    function createComingSoonModal() {
+        // Create modal container
+        const modal = document.createElement('div');
+        modal.classList.add('custom-modal');
+
+        // Create modal content
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2>Coming Soon!</h2>
+                <p>We're working hard to bring you an awesome shuffle feature. Stay tuned!</p>
+                <button class="modal-close">Got it</button>
+            </div>
+        `;
+
+        // Append to body
+        document.body.appendChild(modal);
+
+        // Close button functionality
+        const closeButton = modal.querySelector('.modal-close');
+        closeButton.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(modal);
+            }, 300);
+        });
+
+        // Show modal
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 50);
+    }
+
+    // Event listener for shuffle button
+    shuffleButton.addEventListener('click', createComingSoonModal);
+</script>
+    <style>
+    /* Download Alert Styles */
+    .download-alert {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #00B4DB, #0083B0);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .download-alert.show {
+        opacity: 1;
+        bottom: 30px;
+    }
+
+    .download-alert-icon {
+        margin-right: 15px;
+        font-size: 24px;
+    }
+
+    .download-alert-message {
+        font-size: 16px;
+    }
+</style>
+
+<script>
+// Function to show download alert
+function showDownloadAlert() {
+    // Create alert container
+    const alert = document.createElement('div');
+    alert.classList.add('download-alert');
+
+    // Create alert content
+    alert.innerHTML = `
+        <div class="download-alert-icon">
+            <i class="fas fa-download"></i>
+        </div>
+        <div class="download-alert-message">
+            Download Started
+        </div>
+    `;
+
+    // Append to body
+    document.body.appendChild(alert);
+
+    // Trigger show animation
+    setTimeout(() => {
+        alert.classList.add('show');
+    }, 50);
+
+    // Dismiss alert after 2 seconds
+    setTimeout(() => {
+        alert.classList.remove('show');
+        
+        // Remove from DOM after animation
+        setTimeout(() => {
+            document.body.removeChild(alert);
+        }, 300);
+    }, 2000);
+}
+
+// Modify existing download function to include alert
+function downloadAudio(audioUrl, filename) {
+    // Create a temporary anchor element
+    const downloadLink = document.createElement('a');
+    
+    // Set the href to the audio URL
+    downloadLink.href = audioUrl;
+    
+    // Set the download attribute with the filename
+    // If no filename is provided, use a default name
+    downloadLink.download = filename || 'audio_track.mp3';
+    
+    // Make the link invisible
+    downloadLink.style.display = 'none';
+    
+    // Append to the body
+    document.body.appendChild(downloadLink);
+    
+    // Trigger the download
+    downloadLink.click();
+    
+    // Remove the link from the document
+    document.body.removeChild(downloadLink);
+
+    // Show download alert
+    showDownloadAlert();
+}
+
+// Event listener for download button
+document.getElementById('downloadButton').addEventListener('click', function() {
+    // Get the current audio source
+    const audioPlayer = document.getElementById('audioPlayer');
+    const audioUrl = audioPlayer.src;
+    
+    // Check if audio source exists
+    if (audioUrl) {
+        // Extract filename from the URL or use a default
+        const filename = audioUrl.split('/').pop() || 'downloaded_audio.mp3';
+        
+        // Trigger download
+        downloadAudio(audioUrl, filename);
+    } else {
+        // Optionally, show an alert if no audio is loaded
+        alert('No audio file is currently loaded.');
+    }
+});
+</script>
+<script>
+// Lyrics API Configuration
+const LYRICS_API_BASE_URL = 'https://api.lyrics.ovh/v1';
+
+// Create Lyrics Modal Function
+function createLyricsModal() {
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.className = 'lyrics-modal';
+    modal.innerHTML = `
+        <div class="lyrics-content">
+            <div class="lyrics-header">
+                <h2 class="lyrics-title">Lyrics Search</h2>
+                <button class="lyrics-close">&times;</button>
+            </div>
+            
+            <div class="lyrics-search">
+                <input 
+                    type="text" 
+                    id="artist-name" 
+                    placeholder="Enter Artist Name" 
+                    class="lyrics-input"
+                >
+                <input 
+                    type="text" 
+                    id="song-name" 
+                    placeholder="Enter Song Name" 
+                    class="lyrics-input"
+                >
+                <button id="search-lyrics-btn" class="search-btn">Search Lyrics</button>
+            </div>
+            
+            <div class="lyrics-text">
+                <p>Enter an artist and song name to find lyrics.</p>
+            </div>
+        </div>
+    `;
+
+    // Append to body
+    document.body.appendChild(modal);
+
+    // Get modal elements
+    const closeButton = modal.querySelector('.lyrics-close');
+    const artistInput = modal.querySelector('#artist-name');
+    const songInput = modal.querySelector('#song-name');
+    const searchButton = modal.querySelector('#search-lyrics-btn');
+    const lyricsContainer = modal.querySelector('.lyrics-text');
+
+    // Close button functionality
+    closeButton.addEventListener('click', () => {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(modal);
+        }, 300);
+    });
+
+    // Fetch lyrics function
+    async function fetchLyrics(artist, song) {
+        // Show loading state
+        lyricsContainer.innerHTML = `<p>Loading lyrics for "${song}" by ${artist}...</p>`;
+
+        try {
+            const response = await fetch(
+                `${LYRICS_API_BASE_URL}/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`
+            );
+
+            if (!response.ok) {
+                throw new Error('Lyrics not found');
+            }
+
+            const data = await response.json();
+            lyricsContainer.innerHTML = `<pre>${data.lyrics}</pre>`;
+        } catch (error) {
+            console.error('Lyrics Fetch Error:', error);
+            lyricsContainer.innerHTML = `
+                <p>Unable to find lyrics. Please check the artist and song name.</p>
+                <p>Error: ${error.message}</p>
+            `;
+        }
+    }
+
+    // Search button event listener
+    searchButton.addEventListener('click', () => {
+        const artist = artistInput.value.trim();
+        const song = songInput.value.trim();
+
+        if (artist && song) {
+            fetchLyrics(artist, song);
+        } else {
+            lyricsContainer.innerHTML = '<p>Please enter both artist and song name.</p>';
+        }
+    });
+
+    // Allow Enter key to trigger search
+    [artistInput, songInput].forEach(input => {
+        input.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                searchButton.click();
+            }
+        });
+    });
+
+    // Show modal
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 50);
+}
+
+// Add CSS for the modal (you can move this to a separate CSS file)
+const modalStyles = `
+    .lyrics-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .lyrics-modal.show {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .lyrics-content {
+        background: linear-gradient(135deg, #2C3E50, #3498DB);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 70vh;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        transform: scale(0.7);
+        opacity: 0;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .lyrics-modal.show .lyrics-content {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .lyrics-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .lyrics-title {
+        font-size: 24px;
+        margin: 0;
+    }
+
+    .lyrics-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .lyrics-close:hover {
+        transform: scale(1.2);
+    }
+
+    .lyrics-search {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .lyrics-input {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .search-btn {
+        padding: 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-btn:hover {
+        background-color: #45a049;
+    }
+
+    .lyrics-text {
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    .lyrics-text pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+        line-height: 1.6;
+    }
+`;
+
+// Inject styles
+const styleElement = document.createElement('style');
+styleElement.textContent = modalStyles;
+document.head.appendChild(styleElement);
+
+// Add event listener to lyrics button (assuming it exists)
+const lyricsButton = document.getElementById('lyricsButton');
+if (lyricsButton) {
+    lyricsButton.addEventListener('click', createLyricsModal);
 }
 </script>
 </body>

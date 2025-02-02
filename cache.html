@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cached Songs</title>
+    <title>Cached Data</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,6 +22,7 @@
             border: 1px solid #ddd;
             margin: 5px 0;
             background-color: #f9f9f9;
+            word-break: break-all;
         }
         button {
             cursor: pointer;
@@ -31,59 +32,17 @@
             color: white;
             border-radius: 3px;
         }
+        #clearAll {
+            background-color: black;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h2>Cached Songs</h2>
-    <ul id="songList"></ul>
-    <button onclick="clearAllCachedSongs()">Clear All</button>
-    
-    <script>
-      const CACHE_NAME = "spookify-audio-v1";
-const songList = document.getElementById("songList");
+    <h2>Cached Data</h2>
+    <ul id="cacheList"></ul>
+    <button id="clearAll">Clear All Cache</button>
 
-// Function to list all cached songs
-async function loadCachedSongs() {
-    songList.innerHTML = ""; // Clear previous list
-
-    const cache = await caches.open(CACHE_NAME);
-    const cachedRequests = await cache.keys();
-
-    if (cachedRequests.length === 0) {
-        songList.innerHTML = "<p>No cached songs available.</p>";
-        return;
-    }
-
-    cachedRequests.forEach(async (request) => {
-        const listItem = document.createElement("li");
-        listItem.textContent = request.url.split("/").pop(); // Show only filename
-
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Remove";
-        deleteButton.onclick = async () => {
-            await cache.delete(request);
-            loadCachedSongs(); // Refresh list
-        };
-
-        listItem.appendChild(deleteButton);
-        songList.appendChild(listItem);
-    });
-}
-
-// Function to clear all cached songs
-async function clearAllCachedSongs() {
-    const cache = await caches.open(CACHE_NAME);
-    const cachedRequests = await cache.keys();
-
-    await Promise.all(cachedRequests.map(request => cache.delete(request)));
-
-    loadCachedSongs(); // Refresh list
-}
-
-// Load cached songs on page load
-loadCachedSongs();
-
-      
-    </script>
+    <script src="cache.js"></script>
 </body>
 </html>

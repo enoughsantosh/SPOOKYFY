@@ -1,14 +1,25 @@
 const cacheList = document.getElementById("cacheList");
 const clearAllButton = document.getElementById("clearAll");
+const totalSizeDisplay = document.getElementById("totalSize");
 
-// Function to list all cached items
+// Convert bytes to human-readable format (KB, MB)
+function formatSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    else if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    else return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+// Function to list all cached items and calculate sizes
 async function loadCachedData() {
     cacheList.innerHTML = ""; // Clear previous list
+    totalSizeDisplay.textContent = "Total Cache Size: Calculating...";
 
     const cacheNames = await caches.keys(); // Get all cache storage names
+    let totalSize = 0;
 
     if (cacheNames.length === 0) {
         cacheList.innerHTML = "<p>No cached data available.</p>";
+        totalSizeDisplay.textContent = "Total Cache Size: 0 B";
         return;
     }
 
@@ -23,13 +34,17 @@ async function loadCachedData() {
         cacheTitle.textContent = `Cache: ${cacheName}`;
         cacheList.appendChild(cacheTitle);
 
-        cachedRequests.forEach(async (request) => {
+        for (const request of cachedRequests) {
             const listItem = document.createElement("li");
-
-            // Extract filename from URL (remove query params)
             let fileName = request.url.split("/").pop().split("?")[0] || request.url;
 
-            listItem.textContent = decodeURIComponent(fileName); // Show file name
+            // Fetch the response size
+            const response = await cache.match(request);
+            const blob = await response.blob();
+            const size = blob.size; // Get file size in bytes
+            totalSize += size; // Add to total size
+
+            listItem.textContent = `${decodeURIComponent(fileName)} - ${formatSize(size)}`;
 
             // Create "Remove" button
             const deleteButton = document.createElement("button");
@@ -41,8 +56,10 @@ async function loadCachedData() {
 
             listItem.appendChild(deleteButton);
             cacheList.appendChild(listItem);
-        });
+        }
     }
+
+    totalSizeDisplay.textContent = `Total Cache Size: ${formatSize(totalSize)}`;
 }
 
 // Function to clear all cached data
